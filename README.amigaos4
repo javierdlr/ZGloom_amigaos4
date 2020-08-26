@@ -1,0 +1,44 @@
+# How to play
+
+Gloom was made freely available by its developers here: https://github.com/earok/GloomAmiga/archive/master.zip
+Download, unzip and move the ZGloom binary inside the uncompressed directory before run it.
+
+# Default Controls
+
+Cursors, left alt to strafe, left ctrl to fire. F1 skips level. F12 toggles fullscreen.
+PrintScreen/SysReq dumps a bitmap. Escape pauses the action and shows the menu.
+
+
+
+2020.06.30
+-First port to AmigaOS4.
+-Created Makefile.amigaos4.
+-config.cpp: std::stoi replacement thx to salass00.
+-Disabled music audio (XMP) support [WIP]
+-zgloom.cpp: added amiga version string and stack cookie.
+-Window opens centered on screen.
+-titlescreen.cpp: added zgloom version string to about screen.
+-Added zgloomGUI.script to launch different gloom releases.
+-Created amigaos4.h for dependecies/functions/methods using only on AmigaOS4.
+-Updated to use lastest SDL2 build.
+-Updated changes to use amigaos4.h header.
+-zgloom.cpp: added drawer name as argument to launch different Glooms.
+-zgloomGUI.script: updated to suit above change.
+-zgloom.cpp: iconify while playing, puts game in pause (like pressing ESC) mode.
+-Added icons made by davebraco <davebraco@gmail.com>.
+-Updated to ZGloom 0.3.0 (was 0.2.0).
+-zgloom.cpp: window has resizable gadget (SDL_CreateWindow(.. SDL_WINDOW_RESIZABLE..) tag).
+-zgloom.cpp: wasn't freeing all resources when "forced" to exit/quit.
+-zgloom.cpp: added gamecontrollerdb.txt file mappings (gamepad support database).
+
+
+
+Thanks to (in no special order):
+Swizpig for ZGloom port (https://github.com/Swizpig/ZGloom).
+salass00, kas1e, samo79 (code and tips).
+os4coding.net
+
+
+
+MODs site:
+http://nitta.sakura.ne.jp/gloom-mod/ZGloom/ZGloom-testing.html

@@ -1,0 +1,52 @@
+TARGET = ZGloom
+
+OS := $(shell uname)
+
+ifeq ($(strip $(OS)),AmigaOS)
+	AMIGADATE = $(shell c:date LFORMAT %d.%m.%Y)
+	CXXINC = -I/SDK/local/common/include
+else
+	AMIGADATE = $(shell date +"%-d.%-m.%Y")
+	CXXINC = -I/usr/local/amiga/ppc-amigaos/SDK/local/common/include
+endif
+
+
+CXX = ppc-amigaos-g++
+STRIP = ppc-amigaos-strip
+CC = ppc-amigaos-gcc
+
+#LIBS = -athread=native -lSDL2_image -ltiff -lwebp -lpng -ljpeg -lz -lm -lSDL2_mixer -lxmp -lmikmod -lmodplug -lFLAC -lsmpeg2 -lvorbisfile -lvorbis -logg -lSDL2
+LIBS = -athread=native -lSDL2_mixer -lxmp -lmikmod -lmodplug -lFLAC -lsmpeg2 -lvorbisfile -lvorbis -logg -lSDL2
+CXXFLAGS = -gstabs -fpermissive $(CXXINC) -D__AMIGADATE__=\"$(AMIGADATE)\" -D_NOMUSIC_
+CCFLAGS = -gstabs $(CXXINC) -D__AMIGADATE__=\"$(AMIGADATE)\" -D_NOMUSIC_
+
+.PHONY: default all clean cleanall zgui
+
+default: $(TARGET).debug
+all: default
+
+zgui:
+	$(CC) $(CCFLAGS) -c zgui.c
+	$(CXX) zgui.o $(OBJS) $(LIBS) -o $(TARGET).debug
+	$(STRIP) $(TARGET).debug -o $(TARGET)
+
+HEADERS = $(wildcard *.h)
+OBJS = $(patsubst %.cpp, %.o, $(wildcard *.cpp))
+
+%.o: %.c $(HEADERS)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+#.PRECIOUS: $(TARGET).debug $(OBJS)
+
+$(TARGET).debug: $(OBJS)
+	$(CXX) zgui.o $(OBJS) $(LIBS) -o $@
+	$(STRIP) $(TARGET).debug -o $(TARGET)
+
+clean:
+	rm -f $(TARGET)
+	rm -f $(TARGET).debug
+
+cleanall:
+	rm -f *.o
+	rm -f $(TARGET)
+	rm -f $(TARGET).debug
