@@ -234,6 +234,7 @@ int main(void)//int argc, char* argv[])
 		IDOS->UnLock(newdir);
 #endif
 		std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
+		CloseLibs();
 		return 1;
 	}
 
@@ -249,6 +250,7 @@ int main(void)//int argc, char* argv[])
 		IDOS->UnLock(newdir);
 #endif
 		std::cout << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
+		CloseLibs();
 		return 1;
 	}
 
@@ -265,6 +267,7 @@ int main(void)//int argc, char* argv[])
 		IDOS->UnLock(newdir);
 #endif
 		std::cout << "SDL_CreateTexture Error: " << SDL_GetError() << std::endl;
+		CloseLibs();
 		return 1;
 	}
 

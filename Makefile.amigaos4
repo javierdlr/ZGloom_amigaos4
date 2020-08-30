@@ -22,13 +22,16 @@ CCFLAGS = -gstabs $(CXXINC) -D__AMIGADATE__=\"$(AMIGADATE)\" -D_NOMUSIC_
 
 .PHONY: default all clean cleanall zgui
 
-default: $(TARGET).debug
+default: zgui.o $(TARGET).debug
 all: default
 
 zgui:
 	$(CC) $(CCFLAGS) -c zgui.c
 	$(CXX) zgui.o $(OBJS) $(LIBS) -o $(TARGET).debug
 	$(STRIP) $(TARGET).debug -o $(TARGET)
+
+zgui.o: zgui.c
+	$(CC) $(CCFLAGS) -c zgui.c
 
 HEADERS = $(wildcard *.h)
 OBJS = $(patsubst %.cpp, %.o, $(wildcard *.cpp))
