@@ -10,7 +10,7 @@ PrintScreen/SysReq dumps a bitmap. Escape pauses the action and shows the menu.
 
 
 
-2020.06.30
+2020.08.27
 -First port to AmigaOS4.
 -Created Makefile.amigaos4.
 -config.cpp: std::stoi replacement thx to salass00.
@@ -24,13 +24,14 @@ PrintScreen/SysReq dumps a bitmap. Escape pauses the action and shows the menu.
 -Updated changes to use amigaos4.h header.
 -zgloom.cpp: added drawer name as argument to launch different Glooms.
 -zgloomGUI.script: updated to suit above change.
--zgloom.cpp: iconify while playing, puts game in pause (like pressing ESC) mode.
+-zgloom.cpp: iconify while playing, pauses game (like pressing ESC).
 -Added icons made by davebraco <davebraco@gmail.com>.
 -Updated to ZGloom 0.3.0 (was 0.2.0).
--zgloom.cpp: window has resizable gadget (SDL_CreateWindow(.. SDL_WINDOW_RESIZABLE..) tag).
+-zgloom.cpp: window has resizable gadget (SDL_CreateWindow(..SDL_WINDOW_RESIZABLE..) tag).
 -zgloom.cpp: wasn't freeing all resources when "forced" to exit/quit.
 -zgloom.cpp: added gamecontrollerdb.txt file mappings (gamepad support database).
-
+-zgloom.cpp & zgui.c/.h: created a simple GUI for selecting gloom game (removing CLI,
+ zgloomGUI.script usage).
 
 
 Thanks to (in no special order):
