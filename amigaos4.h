@@ -1,5 +1,5 @@
-#include "proto/dos.h"
-#include <workbench/startup.h>
+#include <proto/dos.h>
+//#include <workbench/startup.h>
 
 #include "zgloom_rev.h"
 

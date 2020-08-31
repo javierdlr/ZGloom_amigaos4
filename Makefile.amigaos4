@@ -30,7 +30,7 @@ zgui:
 	$(CXX) zgui.o $(OBJS) $(LIBS) -o $(TARGET).debug
 	$(STRIP) $(TARGET).debug -o $(TARGET)
 
-zgui.o: zgui.c
+zgui.o: zgui.c zgui.h
 	$(CC) $(CCFLAGS) -c zgui.c
 
 HEADERS = $(wildcard *.h)

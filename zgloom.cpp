@@ -33,8 +33,8 @@ extern "C" {
 	extern void CloseLibs(void);
 	extern void launch_gui(void);
 
-	extern STRPTR zgloom_game_drw[];
-	extern uint32 gloom_game; // 0:Gloom, 1:G_Deluxe; 2:Zombie_Ed; 3:Z_Massacre; 4:none/quit
+	extern CONST_STRPTR zgloom_game_drw[];
+	extern uint32 gloom_game; // 0:Gloom, 1:G_Deluxe; 2:Zombie_Ed; 3:Z_Massacre; 4:none/null/quit
 }
 #endif
 
@@ -150,7 +150,7 @@ int main(void)//int argc, char* argv[])
 
 	olddir = IDOS->GetCurrentDir();
 
-	if( OpenLibs() == FALSE)
+	if(OpenLibs() == FALSE)
 	{
 		IDOS->PutErrStr("Missing classes/libs to show ZGloomStart GUI!");
 		CloseLibs();
@@ -182,6 +182,7 @@ int main(void)//int argc, char* argv[])
 #ifdef __amigaos4__
 		IDOS->SetCurrentDir(olddir);
 		IDOS->UnLock(newdir);
+		CloseLibs();
 #endif
 		std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
 		return 1;
@@ -232,9 +233,9 @@ int main(void)//int argc, char* argv[])
 		SDL_Quit();
 		IDOS->SetCurrentDir(olddir);
 		IDOS->UnLock(newdir);
+		CloseLibs();
 #endif
 		std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
-		CloseLibs();
 		return 1;
 	}
 
@@ -248,9 +249,9 @@ int main(void)//int argc, char* argv[])
 		SDL_Quit();
 		IDOS->SetCurrentDir(olddir);
 		IDOS->UnLock(newdir);
+		CloseLibs();
 #endif
 		std::cout << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
-		CloseLibs();
 		return 1;
 	}
 
@@ -265,9 +266,9 @@ int main(void)//int argc, char* argv[])
 		SDL_Quit();
 		IDOS->SetCurrentDir(olddir);
 		IDOS->UnLock(newdir);
+		CloseLibs();
 #endif
 		std::cout << "SDL_CreateTexture Error: " << SDL_GetError() << std::endl;
-		CloseLibs();
 		return 1;
 	}
 

@@ -67,8 +67,8 @@ Class *ButtonClass, /**LabelClass, *SpaceClass,*/ *BitMapClass,
 Object *Objects[LAST_NUM];
 
 //const char *version = VERSTAG;
-STRPTR zgloom_game_drw[] = { "Gloom", "GloomDeluxe", "ZombieEdition", "ZombieMassacre", NULL };
-uint32 gloom_game; // 0:Gloom, 1:G_Deluxe; 2:Zombie_Ed; 3:Z_Massacre; 4:none/quit
+CONST_STRPTR zgloom_game_drw[] = { "Gloom", "GloomDeluxe", "ZombieEdition", "ZombieMassacre", NULL };
+uint32 gloom_game; // 0:Gloom, 1:G_Deluxe; 2:Zombie_Ed; 3:Z_Massacre; 4:none/null/quit
 
 
 BOOL OpenLibs(void);

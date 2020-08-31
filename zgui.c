@@ -104,7 +104,7 @@ BOOL ProcessGUI(struct Window *pwin)
 	uint16 code = 0;
 	uint32 result = WMHI_LASTMSG, siggot = 0, wsigmask = 0, res_value = 0;
 //	STRPTR zgloom_game_drw[] = { "Gloom", "GloomDeluxe", "ZombieEdition", "ZombieMassacre" },
-	STRPTR zgloom_game_img[] = { "Gloom.png", "Gloom Deluxe.png", "ZombieEdition.png", "Zombie massacre.png" };
+	CONST_STRPTR zgloom_game_img[] = { "Gloom.png", "Gloom Deluxe.png", "ZombieEdition.png", "Zombie massacre.png" };
 	char zgloom_img_path[512] = "games_images";
 
 	IIntuition->GetAttr(WINDOW_SigMask, OBJ(OID_MAIN), &wsigmask);
@@ -118,7 +118,7 @@ BOOL ProcessGUI(struct Window *pwin)
 	switch(result & WMHI_CLASSMASK)
 	{
 		case WMHI_CLOSEWINDOW:
-			gloom_game = sizeof(zgloom_game_drw)/sizeof(STRPTR) - 1;
+			gloom_game = sizeof(zgloom_game_drw)/sizeof(STRPTR) - 1; // last array entry -> NULL
 			done = FALSE;
 		break;
 		case WMHI_ICONIFY:
@@ -128,10 +128,14 @@ BOOL ProcessGUI(struct Window *pwin)
 			}
 		break;
 		case WMHI_UNICONIFY:
-			if( (pwin=(struct Window *)IIntuition->IDoMethod(OBJ(OID_MAIN), WM_OPEN, NULL)) ) {
 //IDOS->Printf("[zgui.c] WMHI_UNICONIFY\n");
+			pwin = (struct Window *)IIntuition->IDoMethod(OBJ(OID_MAIN), WM_OPEN, NULL);
+			/*if( (pwin=(struct Window *)IIntuition->IDoMethod(OBJ(OID_MAIN), WM_OPEN, NULL)) ) {
 			}
-			else done = FALSE;
+			else {
+				gloom_game = sizeof(zgloom_game_drw)/sizeof(STRPTR) - 1; // last array entry -> NULL
+				done = FALSE;
+			}*/
 		break;
 		case WMHI_GADGETUP:
 //IDOS->Printf("[zgui.c] WMHI_GADGETUP\n");
@@ -143,11 +147,9 @@ BOOL ProcessGUI(struct Window *pwin)
 
 					gloom_game = res_value;
 
-					//IDOS->AddPart( zgloom_img_path, zgloom_game_img[res_value], sizeof(zgloom_img_path) );
 					IUtility->Strlcpy( zgloom_img_path, zgloom_game_drw[res_value], sizeof(zgloom_img_path) );
 					IDOS->AddPart( zgloom_img_path, zgloom_game_img[res_value], sizeof(zgloom_img_path) );
-
-//IDOS->Printf("new image: '%s'\n",zgloom_game_str);
+//IDOS->Printf("new image: '%s'\n",zgloom_img_path);
 					Object *newobj = IIntuition->NewObject(BitMapClass, NULL, //"bitmap.image",
 					                                       IA_Scalable,TRUE,
 					                                       BITMAP_Masking,TRUE, BITMAP_Screen,pwin->WScreen,//screen,
@@ -183,7 +185,7 @@ void launch_gui(void)
 	//struct List zgloom_chooser;
 	struct DiskObject *iconify = NULL;
 	struct Screen *screen = FrontMostScr();
-	STRPTR zgloom_chooser[] = { "Gloom", "Gloom Deluxe", "Gloom Zombie Ed.", "Gloom Zombie Massacre", NULL };
+	CONST_STRPTR zgloom_chooser[] = { "Gloom", "Gloom Deluxe", "Gloom Zombie Ed.", "Gloom Zombie Massacre", NULL };
 
 	gAppPort = IExec->AllocSysObjectTags(ASOT_PORT, TAG_END);
 
