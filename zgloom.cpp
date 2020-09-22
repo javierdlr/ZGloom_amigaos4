@@ -33,8 +33,8 @@ extern "C" {
 	extern void CloseLibs(void);
 	extern void launch_gui(void);
 
-	extern CONST_STRPTR zgloom_game_drw[];
-	extern uint32 gloom_game; // 0:Gloom, 1:G_Deluxe; 2:Zombie_Ed; 3:Z_Massacre; 4:none/null/quit
+	extern STRPTR zgloom_game_drw[];
+	extern uint32 gloom_game; // 0:Gloom, 1:G_Deluxe; 2:Zombie_Ed; 3:Z_Massacre; 4:none/quit
 }
 #endif
 
@@ -143,29 +143,40 @@ enum GameState
 };
 
 
-int main(void)//int argc, char* argv[])
+int main(int argc, char* argv[])
 {
 #ifdef __amigaos4__
 	BPTR newdir = ZERO, olddir = ZERO;
 
 	olddir = IDOS->GetCurrentDir();
 
-	if(OpenLibs() == FALSE)
+	if(argc == 0) // from WB
 	{
-		IDOS->PutErrStr("Missing classes/libs to show ZGloomStart GUI!");
-		CloseLibs();
-		return 1;
-	}
+		if(OpenLibs() == FALSE)
+		{
+			IDOS->PutErrStr("Missing classes/libs to show ZGloomStart GUI!");
+			CloseLibs();
+			return 1;
+		}
 
-	launch_gui();
+		launch_gui();
+		newdir = IDOS->Lock(zgloom_game_drw[gloom_game], SHARED_LOCK);
+		//if(newdir != ZERO) IDOS->SetCurrentDir(newdir);
 //IDOS->Printf("Launching %ld:'%s'...\n",gloom_game,zgloom_game_drw[gloom_game]);
-	if(zgloom_game_drw[gloom_game] == NULL)
+		if(zgloom_game_drw[gloom_game] == NULL)
+		{
+			CloseLibs();
+			return 1;
+		}
+	}
+	else // from CLI/Shell
 	{
-		CloseLibs();
-		return 1;
+//IDOS->Printf("'%s'\n",argv[1]);
+		newdir = IDOS->Lock(argv[1], SHARED_LOCK);
+		//if(newdir != ZERO) IDOS->SetCurrentDir(newdir);
 	}
 
-	newdir = IDOS->Lock(zgloom_game_drw[gloom_game], SHARED_LOCK);
+	//newdir = IDOS->Lock(zgloom_game_drw[gloom_game], SHARED_LOCK);
 	//if(newdir != ZERO) IDOS->SetCurrentDir(newdir);
 	IDOS->SetCurrentDir(newdir);
 #endif
@@ -182,7 +193,6 @@ int main(void)//int argc, char* argv[])
 #ifdef __amigaos4__
 		IDOS->SetCurrentDir(olddir);
 		IDOS->UnLock(newdir);
-		CloseLibs();
 #endif
 		std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
 		return 1;
@@ -200,6 +210,26 @@ int main(void)//int argc, char* argv[])
 	TitleScreen titlescreen;
 	MenuScreen menuscreen;
 	GameState state = STATE_TITLE;
+
+#ifdef __amigaos4__
+//IDOS->Printf("'%s' (%ld)\n",argv[1],argc);
+	if(script.numlines == 0)
+	{
+		SDL_Quit();
+		IDOS->SetCurrentDir(olddir);
+		IDOS->UnLock(newdir);
+		if(argc == 0)
+		{
+			CloseLibs();
+		}
+		else
+		{
+			std::cout << "ERROR: Invalid Gloom (drawer) game/release!!!\n";
+			std::cout << "Usage from CLI/Shell: " << argv[0] << " <GLOOM_DRAWER_GAME>\n";
+		}
+		return 1;
+	}
+#endif
 
 #ifndef _NOMUSIC_
 	xmp_context ctx;
@@ -233,9 +263,9 @@ int main(void)//int argc, char* argv[])
 		SDL_Quit();
 		IDOS->SetCurrentDir(olddir);
 		IDOS->UnLock(newdir);
-		CloseLibs();
 #endif
 		std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
+		if(argc == 0) CloseLibs();
 		return 1;
 	}
 
@@ -249,9 +279,9 @@ int main(void)//int argc, char* argv[])
 		SDL_Quit();
 		IDOS->SetCurrentDir(olddir);
 		IDOS->UnLock(newdir);
-		CloseLibs();
 #endif
 		std::cout << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
+		if(argc == 0) CloseLibs();
 		return 1;
 	}
 
@@ -266,9 +296,9 @@ int main(void)//int argc, char* argv[])
 		SDL_Quit();
 		IDOS->SetCurrentDir(olddir);
 		IDOS->UnLock(newdir);
-		CloseLibs();
 #endif
 		std::cout << "SDL_CreateTexture Error: " << SDL_GetError() << std::endl;
+		if(argc == 0) CloseLibs();
 		return 1;
 	}
 
@@ -305,9 +335,9 @@ int main(void)//int argc, char* argv[])
 	else
 	{
 		fontfile.Load((Config::GetMiscDir() + "smallfont.bin").c_str());
-		if (fontfile.data)smallfont.Load(fontfile);
+		if (fontfile.data) smallfont.Load(fontfile);
 		fontfile.Load((Config::GetMiscDir() + "bigfont.bin").c_str());
-		if (fontfile.data)bigfont.Load(fontfile);
+		if (fontfile.data) bigfont.Load(fontfile);
 	}
 #endif
 
@@ -837,7 +867,7 @@ printf("Uniconified\n");
 	IDOS->SetCurrentDir(olddir);
 	IDOS->UnLock(newdir);
 
-	CloseLibs();
+	if(argc == 0) CloseLibs();
 #endif
 
 	return 0;

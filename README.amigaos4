@@ -1,7 +1,11 @@
 # How to play
 
 Gloom was made freely available by its developers here: https://github.com/earok/GloomAmiga/archive/master.zip
-Download, unzip and move the ZGloom binary inside the uncompressed directory before run it.
+or if you have the original ones, just copy the data drawers/files (maps, misc, objs,
+pics, sfxs and txts) inside the corresponding drawer.
+NOTE: I already added the Gloom data files, so you don't need to download from github.
+Other data files here: https://www.morphos-storage.net/dl.php?id=1538895 [BeWorld]
+
 
 # Default Controls
 
@@ -10,7 +14,7 @@ PrintScreen/SysReq dumps a bitmap. Escape pauses the action and shows the menu.
 
 
 
-2020.08.27
+2020.09.08
 -First port to AmigaOS4.
 -Created Makefile.amigaos4.
 -config.cpp: std::stoi replacement thx to salass00.
@@ -32,14 +36,19 @@ PrintScreen/SysReq dumps a bitmap. Escape pauses the action and shows the menu.
 -zgloom.cpp: added gamecontrollerdb.txt file mappings (gamepad support database).
 -zgloom.cpp & zgui.c/.h: created a simple GUI for selecting gloom game (removing CLI,
  zgloomGUI.script usage).
+-zgui.c: rewrote gloom release/edition image button and (re)added CLI/Shell usage.
 
 
 Thanks to (in no special order):
 Swizpig for ZGloom port (https://github.com/Swizpig/ZGloom).
+BeWorld for its morphos port (https://www.morphos-storage.net/dl.php?id=1538895).
 salass00, kas1e, samo79 (code and tips).
 os4coding.net
 
 
-
 MODs site:
 http://nitta.sakura.ne.jp/gloom-mod/ZGloom/ZGloom-testing.html
+
+
+ToDo:
+A lot ;-)

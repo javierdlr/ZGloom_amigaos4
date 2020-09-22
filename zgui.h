@@ -35,6 +35,7 @@ enum {
  OID_MAIN = 0,
  OID_ZGLOOM_CHOOSER,
  OID_ZGLOOM,
+ OID_ZGLOOM_BTN,
  OID_ZGLOOM_IMG,
  LAST_NUM
 };
@@ -47,7 +48,7 @@ struct Library *IntuitionBase = NULL;
 struct Library *UtilityBase = NULL;
 
 struct IconIFace *IIcon = NULL;
-struct DOSIFace *IDOS;
+//struct DOSIFace *IDOS = NULL;
 struct IntuitionIFace *IIntuition = NULL;
 struct UtilityIFace *IUtility = NULL;
 
@@ -65,6 +66,8 @@ Class *ButtonClass, /**LabelClass, *SpaceClass,*/ *BitMapClass,
 #define OBJ(x) Objects[x]
 #define GAD(x) (struct Gadget *)Objects[x]
 Object *Objects[LAST_NUM];
+
+struct Window *pwindow = NULL;
 
 //const char *version = VERSTAG;
 CONST_STRPTR zgloom_game_drw[] = { "Gloom", "GloomDeluxe", "ZombieEdition", "ZombieMassacre", NULL };
