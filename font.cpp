@@ -121,7 +121,8 @@ bool Font::Load(CrmFile& file)
 
 		width = modulo * 8;
 
-		surfaces[i] = SDL_CreateRGBSurface(0, width, height / 7, 8, 0, 0, 0, 0);
+		surfaces[i]   = SDL_CreateRGBSurface(0, width, height / 7, 8, 0, 0, 0, 0);
+		surfaces32[i] = nullptr;
 		SDL_SetColorKey(surfaces[i], 1, 0);
 
 		//printf("%i %i %i %i\n", shapepos, maskpos, width, height);
@@ -259,4 +260,21 @@ void Font::PrintMultiLineMessage(std::string message, int y, SDL_Surface* dest)
 		}
 	}
 	PrintMessage(message, y, dest, 1);
+}
+
+Font::~Font()
+{
+	for (int i = 0; i < glyphs; i++)
+	{
+		if (surfaces[i])
+		{
+			SDL_FreeSurface(surfaces[i]);
+			surfaces[i] = nullptr;
+		}
+		if (surfaces32[i])
+		{
+			SDL_FreeSurface(surfaces32[i]);
+			surfaces32[i] = nullptr;
+		}
+	}
 }
