@@ -11,11 +11,36 @@ extern "C" {
 #include "zgui.h"
 
 
+struct Library *IconBase = NULL;
+//struct Library *DOSBase;
+struct Library *IntuitionBase = NULL;
+struct Library *UtilityBase = NULL;
+
+struct IconIFace *IIcon = NULL;
+//struct DOSIFace *IDOS = NULL;
+struct IntuitionIFace *IIntuition = NULL;
+struct UtilityIFace *IUtility = NULL;
+
+struct Library *ChooserBase = NULL;
+// the class library base
+struct ClassLibrary *ButtonBase = NULL, *BitMapBase = NULL, *LayoutBase = NULL, *WindowBase = NULL;
+// the class pointer
+Class *ButtonClass, *BitMapClass, *ChooserClass, *LayoutClass, *WindowClass;
+// some interfaces needed
+//struct LayoutIFace *ILayout;
+//struct ChooserIFace *IChooser;
+
+
+#define OBJ(x) Objects[x]
+#define GAD(x) (struct Gadget *)Objects[x]
+Object *Objects[LAST_NUM];
+
+CONST_STRPTR zgloom_game_drw[] = { "Gloom", "GloomDeluxe", "ZombieEdition", "ZombieMassacre", NULL };
+
+
 BOOL OpenLibs(void)
 {
-	BOOL res = TRUE;
-
-	DOSBase = IExec->OpenLibrary("dos.library", 52);
+	//DOSBase = IExec->OpenLibrary("dos.library", 52);
 	//IDOS = (struct DOSIFace *)IExec->GetInterface(DOSBase, "main", 1, NULL);
 
 	UtilityBase = IExec->OpenLibrary("utility.library", 52);
@@ -27,41 +52,59 @@ BOOL OpenLibs(void)
 	IconBase = IExec->OpenLibrary("icon.library", 52);
 	IIcon = (struct IconIFace *)IExec->GetInterface(IconBase, "main", 1, NULL);
 
-	LayoutBase = IIntuition->OpenClass("gadgets/layout.gadget", 52, &LayoutClass);
-	BitMapBase = IIntuition->OpenClass("images/bitmap.image", 52, &BitMapClass);
-	ButtonBase = IIntuition->OpenClass("gadgets/button.gadget", 52, &ButtonClass);
-	WindowBase = IIntuition->OpenClass("window.class", 52, &WindowClass);
+	if(IIntuition) {
+		LayoutBase = IIntuition->OpenClass("gadgets/layout.gadget", 52, &LayoutClass);
+		BitMapBase = IIntuition->OpenClass("images/bitmap.image", 52, &BitMapClass);
+		ButtonBase = IIntuition->OpenClass("gadgets/button.gadget", 52, &ButtonClass);
+		WindowBase = IIntuition->OpenClass("window.class", 52, &WindowClass);
 
-	//ILayout = (struct LayoutIFace *)IExec->GetInterface( (struct Library *)LayoutBase, "main", 1, NULL );
-	ChooserBase = (struct Library *)IIntuition->OpenClass("gadgets/chooser.gadget", 52, &ChooserClass);
-	//IChooser = (struct ChooserIFace *)IExec->GetInterface( (struct Library *)ChooserBase, "main", 1, NULL );
+		//ILayout = (struct LayoutIFace *)IExec->GetInterface( (struct Library *)LayoutBase, "main", 1, NULL );
+		ChooserBase = (struct Library *)IIntuition->OpenClass("gadgets/chooser.gadget", 52, &ChooserClass);
+		//IChooser = (struct ChooserIFace *)IExec->GetInterface( (struct Library *)ChooserBase, "main", 1, NULL );
+	}
 
-	if(!DOSBase || !UtilityBase || !IntuitionBase || !IconBase || !LayoutBase
-	   || !BitMapBase || !ButtonBase || !WindowBase || !ChooserBase) res = FALSE;
+	if(!UtilityBase || !IntuitionBase || !IconBase || !LayoutBase
+	   || !BitMapBase || !ButtonBase || !WindowBase || !ChooserBase) { return FALSE; }
 
-	return(res);
+	return TRUE;
 }
 
 void CloseLibs(void)
 {
-	/*if(BitMapBase)*/ IIntuition->CloseClass(BitMapBase);
-	/*if(LayoutBase)*/ IIntuition->CloseClass(LayoutBase);
-	/*if(ButtonBase)*/ IIntuition->CloseClass(ButtonBase);
-	/*if(WindowBase)*/ IIntuition->CloseClass(WindowBase);
+	if(IIntuition) {
+		/*if(BitMapBase)*/ IIntuition->CloseClass(BitMapBase);
+		BitMapBase = NULL;
+		/*if(LayoutBase)*/ IIntuition->CloseClass(LayoutBase);
+		LayoutBase = NULL;
+		/*if(ButtonBase)*/ IIntuition->CloseClass(ButtonBase);
+		ButtonBase = NULL;
+		/*if(WindowBase)*/ IIntuition->CloseClass(WindowBase);
+		WindowBase = NULL;
 
-	//IExec->DropInterface( (struct Interface *)IChooser );
-	/*if(ChooserBase)*/ IIntuition->CloseClass( (struct ClassLibrary *)ChooserBase );
+		//IExec->DropInterface( (struct Interface *)IChooser );
+		//IChooser = NULL;
+		/*if(ChooserBase)*/ IIntuition->CloseClass( (struct ClassLibrary *)ChooserBase );
+		ChooserBase = NULL;
+	}
+
 	//IExec->DropInterface( (struct Interface *)ILayout );
-
 	IExec->DropInterface( (struct Interface *)IIcon );
+	IIcon = NULL;
 	IExec->CloseLibrary(IconBase);
+	IconBase = NULL;
 
 	IExec->DropInterface( (struct Interface *)IIntuition );
+	IIntuition = NULL;
 	IExec->CloseLibrary(IntuitionBase);
+	IntuitionBase = NULL;
 
 	IExec->DropInterface( (struct Interface *)IUtility );
+	IUtility = NULL;
 	IExec->CloseLibrary(UtilityBase);
-	IExec->CloseLibrary(DOSBase);
+	UtilityBase = NULL;
+
+	//IExec->CloseLibrary(DOSBase);
+	//DOSBase = NULL;
 }
 
 
@@ -97,17 +140,21 @@ void CloseLibs(void)
 	IExec->NewList(list);
 }*/
 
-void UpdateImageButton(void)//struct Window *pw)
+void UpdateImageButton(struct ZGloomGUI *zgg)
 {
 	//APTR context;
 	BPTR res_lock;
-	BOOL dir_flag = TRUE;
-	CONST_STRPTR zgloom_game_img[] = { "Gloom.png", "Gloom Deluxe.png", "ZombieEdition.png", "Zombie massacre.png" };
-	char zgloom_img_path[512] = "games_images";
+	BOOL dir_flag = FALSE;
+	char zgloom_game_img[32], zgloom_img_path[512] = "games_images";
 	struct Screen *screen = FrontMostScr();
 
+	// "Build" the image filename
+	IUtility->Strlcpy( zgloom_game_img, zgloom_game_drw[zgg->game], sizeof(zgloom_game_img) );	
+	IUtility->Strlcat( zgloom_game_img, ".png", sizeof(zgloom_game_img) );
+#if 1
+	dir_flag = TRUE;
 	// Lazy check to know Gloom release exists/available
-	IUtility->Strlcpy( zgloom_img_path, zgloom_game_drw[gloom_game], sizeof(zgloom_img_path) );
+	IUtility->Strlcpy( zgloom_img_path, zgloom_game_drw[zgg->game], sizeof(zgloom_img_path) );
 	IDOS->AddPart( zgloom_img_path, "txts", sizeof(zgloom_img_path) );
 	//context = IDOS->ObtainDirContextTags(EX_StringNameInput,zgloom_img_path, TAG_END);
 	if( (res_lock=IDOS->Lock(zgloom_img_path, SHARED_LOCK)) != ZERO )
@@ -116,10 +163,17 @@ void UpdateImageButton(void)//struct Window *pw)
 		dir_flag = FALSE;
 	}
 
-	IUtility->Strlcpy( zgloom_img_path, zgloom_game_drw[gloom_game], sizeof(zgloom_img_path) );
-	IDOS->AddPart( zgloom_img_path, zgloom_game_img[gloom_game], sizeof(zgloom_img_path) );
-//IDOS->Printf("new image: '%s'\n",zgloom_img_path);
-	IIntuition->IDoMethod( OBJ(OID_ZGLOOM), LM_REMOVECHILD, pwindow, OBJ(OID_ZGLOOM_BTN) );
+		IUtility->Strlcpy( zgloom_img_path, zgloom_game_drw[zgg->game], sizeof(zgloom_img_path) );
+#endif
+	IDOS->AddPart( zgloom_img_path, zgloom_game_img, sizeof(zgloom_img_path) );
+//IExec->DebugPrintF("new image: '%s'\n",zgloom_img_path);
+
+	// Dispose "previous" image
+	IIntuition->DisposeObject( OBJ(OID_ZGLOOM_IMG) );
+	OBJ(OID_ZGLOOM_IMG) = NULL;
+
+	IIntuition->IDoMethod( OBJ(OID_ZGLOOM), LM_REMOVECHILD, zgg->win, OBJ(OID_ZGLOOM_BTN) );
+
 	OBJ(OID_ZGLOOM_BTN) = IIntuition->NewObject(ButtonClass, NULL, //"button.gadget",
 	  GA_Text,      "START",
 	  GA_ID,        OID_ZGLOOM_BTN,
@@ -129,18 +183,19 @@ void UpdateImageButton(void)//struct Window *pw)
 	  BUTTON_RenderImage, OBJ(OID_ZGLOOM_IMG) = IIntuition->NewObject(BitMapClass, NULL, //"bitmap.image",
 	   IA_Scalable, TRUE,
 	   BITMAP_SourceFile, zgloom_img_path,
-	   BITMAP_Screen,     screen,//pw->WScreen,
+	   BITMAP_Screen,     screen,
 	   BITMAP_Masking,    TRUE,
 	  TAG_DONE),
 	TAG_DONE);
-	IIntuition->IDoMethod(OBJ(OID_ZGLOOM), LM_ADDCHILD, pwindow, OBJ(OID_ZGLOOM_BTN), NULL);
+
+	IIntuition->IDoMethod(OBJ(OID_ZGLOOM), LM_ADDCHILD, zgg->win, OBJ(OID_ZGLOOM_BTN), NULL);
 	IIntuition->IDoMethod(OBJ(OID_MAIN), WM_RETHINK);
 
 	//IDOS->ReleaseDirContext(context);
 }
 
 
-BOOL ProcessGUI(void)//struct Window *pwin)
+BOOL ProcessGUI(struct ZGloomGUI *zgg)
 {
 	BOOL done = TRUE;
 	uint16 code = 0;
@@ -153,40 +208,41 @@ BOOL ProcessGUI(void)//struct Window *pwin)
 
 	while( (result=IIntuition->IDoMethod(OBJ(OID_MAIN), WM_HANDLEINPUT, &code)) != WMHI_LASTMSG )
 	{
-//IDOS->Printf("result=0x%lx\n",result);
+//IExec->DebugPrintF("result=0x%lx\n",result);
 	switch(result & WMHI_CLASSMASK)
 	{
 		case WMHI_CLOSEWINDOW:
-			gloom_game = sizeof(zgloom_game_drw)/sizeof(STRPTR) - 1; // last array value -> NULL
+			zgg->game = sizeof(zgloom_game_drw)/sizeof(STRPTR) - 1; // last array value -> NULL
+//IExec->DebugPrintF("zgg->game = %ld\n",zgg->game);
 			done = FALSE;
 		break;
 		case WMHI_ICONIFY:
-//IDOS->Printf("[zgui.c] WMHI_ICONIFY\n");
+//IExec->DebugPrintF("[zgui.c] WMHI_ICONIFY\n");
 			IIntuition->IDoMethod(OBJ(OID_MAIN), WM_ICONIFY);
-			pwindow = NULL;
-//IDOS->Printf("\t0x%08lx\n",pwindow);//pwin);
+			zgg->win = NULL;
+//IExec->DebugPrintF("\t0x%08lx\n",zgg->win);
 		break;
 		case WMHI_UNICONIFY:
-//IDOS->Printf("[zgui.c] WMHI_UNICONIFY\n");
-			pwindow = (struct Window *)IIntuition->IDoMethod(OBJ(OID_MAIN), WM_OPEN, NULL);
-//IDOS->Printf("\t0x%08lx\n",pwindow);//pwin);
+//IExec->DebugPrintF("[zgui.c] WMHI_UNICONIFY\n");
+			zgg->win = (struct Window *)IIntuition->IDoMethod(OBJ(OID_MAIN), WM_OPEN, NULL);
+//IExec->DebugPrintF("\t0x%08lx\n",zgg->win);
 		break;
 		case WMHI_GADGETUP:
-//IDOS->Printf("[zgui.c] WMHI_GADGETUP\n");
+//IExec->DebugPrintF("[zgui.c] WMHI_GADGETUP\n");
 			switch(result & WMHI_GADGETMASK)
 			{
 				case OID_ZGLOOM_CHOOSER:
-//IDOS->Printf("\tOID_ZGLOOM_CHOOSER\n");
+//IExec->DebugPrintF("\tOID_ZGLOOM_CHOOSER\n");
 					IIntuition->GetAttr(CHOOSER_Selected, OBJ(OID_ZGLOOM_CHOOSER), &res_value);
 
-					gloom_game = res_value;
+					zgg->game = res_value;
 
-					UpdateImageButton();//pwin);
+					UpdateImageButton(zgg);
 				break;
 				case OID_ZGLOOM_BTN:
 					//IIntuition->GetAttr(CHOOSER_Selected, OBJ(OID_ZGLOOM_CHOOSER), &res_value);
 					//gloom_game = res_value;
-//IDOS->Printf("\tOID_ZGLOOM_BTN (0x%08lx '%s')\n",gloom_game,zgloom_game_drw[gloom_game]);
+//IExec->DebugPrintF("\tOID_ZGLOOM_BTN (0x%08lx '%s')\n",zgg->game,zgloom_game_drw[zgg->game]);
 					done = FALSE;
 				break;
 			} // END WMHI_GADGETUP switch
@@ -197,14 +253,14 @@ BOOL ProcessGUI(void)//struct Window *pwin)
 }
 
 
-void launch_gui(void)
+int32 launch_gui(void)
 {
 	struct MsgPort *gAppPort = NULL;
-	//struct Window *pwindow = NULL;
 	//struct List zgloom_chooser;
 	struct DiskObject *iconify = NULL;
-	//struct Screen *screen = FrontMostScr();
-	STRPTR zgloom_chooser[] = { "Gloom", "Gloom Deluxe", "Gloom Zombie Edition", "Gloom Zombie Massacre", NULL };
+	CONST_STRPTR zgloom_chooser[] = { "Gloom", "Gloom Deluxe", "Gloom Zombie Edition", "Gloom Zombie Massacre", NULL };
+	uint32 res = sizeof(zgloom_game_drw)/sizeof(STRPTR) - 1; // last array value -> NULL
+	struct ZGloomGUI *ZGG = IExec->AllocVecTags(sizeof(struct ZGloomGUI), AVT_ClearWithValue,NULL, TAG_END);
 
 	gAppPort = IExec->AllocSysObjectTags(ASOT_PORT, TAG_END);
 
@@ -254,23 +310,6 @@ void launch_gui(void)
            TAG_DONE),
 // BUTTON/IMAGE GROUP
            LAYOUT_AddChild, OBJ(OID_ZGLOOM) = IIntuition->NewObject(LayoutClass, NULL, //"layout.gadget",
-             //LAYOUT_Orientation,    LAYOUT_ORIENT_VERT,
-             //LAYOUT_HorizAlignment, LALIGN_CENTER,
-             /*LAYOUT_AddChild, OBJ(OID_ZGLOOM_BTN) = IIntuition->NewObject(ButtonClass, NULL, //"button.gadget",
-              GA_Text,      "START",
-              GA_ID,        OID_ZGLOOM_BTN,
-              GA_RelVerify, TRUE,
-              //GA_HintInfo,  "Click to start",
-              //BUTTON_BevelStyle,  BVS_THIN,
-              //BUTTON_Transparent, TRUE,
-              BUTTON_RenderImage, OBJ(OID_ZGLOOM_IMG) = IIntuition->NewObject(BitMapClass, NULL, //"bitmap.image",
-               IA_Scalable, TRUE,
-               //BITMAP_SourceFile, "games_images/Gloom.png",
-               BITMAP_SourceFile, "Gloom/Gloom.png",
-               BITMAP_Screen,     screen,
-               BITMAP_Masking,    TRUE,
-              TAG_DONE),
-             TAG_DONE),*/
            TAG_DONE), // END of BUTTON/IMAGE GROUP
            CHILD_MinWidth,  128,
            CHILD_MinHeight, 96,
@@ -279,12 +318,13 @@ void launch_gui(void)
         TAG_DONE),
 	TAG_END);
 
-	if( (pwindow=(struct Window *)IIntuition->IDoMethod(OBJ(OID_MAIN), WM_OPEN, NULL)) )
+	if( (ZGG->win=(struct Window *)IIntuition->IDoMethod(OBJ(OID_MAIN), WM_OPEN, NULL)) )
 	{
-		UpdateImageButton();//pwindow);
-		//while(ProcessGUI(pwindow) == TRUE);
-		while(ProcessGUI() == TRUE);
+		UpdateImageButton(ZGG);
+		while(ProcessGUI(ZGG) == TRUE);
+		res = ZGG->game;
 	}
+	//IDOS->Printf("Launching %ld: '%s'...\n",ZGG->game,zgloom_game_drw[res]);
 
 	IIntuition->DisposeObject( OBJ(OID_ZGLOOM_IMG) );
 	//OBJ(OID_ZGLOOM_IMG) = NULL;
@@ -294,20 +334,10 @@ void launch_gui(void)
 	//free_chooser_list(&zgloom_chooser);
 
 	IExec->FreeSysObject(ASOT_PORT, gAppPort);
+
+	IExec->FreeVec(ZGG);
+	return res;
 }
-
-
-/*int main(int argc, char **argv)
-{
-	if( OpenLibs() ) {
-		launch_gui();
-IDOS->Printf("Launching %ld:'%s'...\n",gloom_game,zgloom_game_drw[gloom_game]);
-	}
-
-	CloseLibs();
-
-	return(RETURN_OK);
-}*/
 
 
 /* Get screen at front */
@@ -345,7 +375,7 @@ struct Screen *FrontMostScr(void)
 	IIntuition->UnlockPubScreen(NULL, public_screen_address);
 	}
 
-//IDOS->Printf("%lx\n", (int)public_screen_address);
+//IExec->DebugPrintF("0x%lx\n", (int)public_screen_address);
 	return(public_screen_address);
 }
 

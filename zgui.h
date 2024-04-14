@@ -1,3 +1,7 @@
+#ifndef ZGUI_H
+#define ZGUI_H
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,45 +45,21 @@ enum {
 };
 
 
-
-struct Library *IconBase = NULL;
-struct Library *DOSBase;
-struct Library *IntuitionBase = NULL;
-struct Library *UtilityBase = NULL;
-
-struct IconIFace *IIcon = NULL;
-//struct DOSIFace *IDOS = NULL;
-struct IntuitionIFace *IIntuition = NULL;
-struct UtilityIFace *IUtility = NULL;
-
-struct Library /**LayoutBase = NULL,*/ *ChooserBase = NULL;
-// the class library base
-struct ClassLibrary *ButtonBase = NULL, *BitMapBase = NULL, *LayoutBase = NULL,
-                    /**SpaceBase = NULL, *LabelBase = NULL,*/ *WindowBase = NULL;
-// the class pointer
-Class *ButtonClass, /**LabelClass, *SpaceClass,*/ *BitMapClass,
-      *ChooserClass, *LayoutClass, *WindowClass;
-// some interfaces needed
-//struct LayoutIFace *ILayout;
-//struct ChooserIFace *IChooser;
-
-#define OBJ(x) Objects[x]
-#define GAD(x) (struct Gadget *)Objects[x]
-Object *Objects[LAST_NUM];
-
-struct Window *pwindow = NULL;
-
-//const char *version = VERSTAG;
-CONST_STRPTR zgloom_game_drw[] = { "Gloom", "GloomDeluxe", "ZombieEdition", "ZombieMassacre", NULL };
-uint32 gloom_game; // 0:Gloom, 1:G_Deluxe; 2:Zombie_Ed; 3:Z_Massacre; 4:none/null/quit
+struct ZGloomGUI {
+	struct Window *win;
+	uint32 game; // 0:Gloom, 1:G_Deluxe; 2:Zombie_Ed; 3:Z_Massacre; 4:none/null/quit
+};
 
 
 BOOL OpenLibs(void);
 void CloseLibs(void);
-void launch_gui(void);
+int32 launch_gui(void);
 struct Screen *FrontMostScr(void);
 
 
 #ifdef __cplusplus
 }
+#endif
+
+
 #endif
