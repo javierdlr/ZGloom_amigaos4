@@ -31,10 +31,9 @@
 extern "C" {
 	extern BOOL OpenLibs(void);
 	extern void CloseLibs(void);
-	extern void launch_gui(void);
+	extern int32 launch_gui(void);
 
-	extern STRPTR zgloom_game_drw[];
-	extern uint32 gloom_game; // 0:Gloom, 1:G_Deluxe; 2:Zombie_Ed; 3:Z_Massacre; 4:none/quit
+	extern CONST_STRPTR zgloom_game_drw[];
 }
 #endif
 
@@ -148,32 +147,40 @@ int main(int argc, char* argv[])
 #ifdef __amigaos4__
 	BPTR newdir = ZERO, olddir = ZERO;
 
+	if(OpenLibs() == FALSE)
+	{
+		IDOS->PutErrStr("Missing classes/libs to show ZGloomStart GUI!");
+		CloseLibs();
+		return RETURN_FAIL;
+	}
+
 	olddir = IDOS->GetCurrentDir();
 
 	if(argc == 0) // from WB
 	{
-		if(OpenLibs() == FALSE)
-		{
-			IDOS->PutErrStr("Missing classes/libs to show ZGloomStart GUI!");
-			CloseLibs();
-			return 1;
-		}
+		int32 gloom_game; // 0:Gloom, 1:G_Deluxe; 2:Zombie_Ed; 3:Z_Massacre; 4:none/quit
 
-		launch_gui();
+		gloom_game = launch_gui();
 		newdir = IDOS->Lock(zgloom_game_drw[gloom_game], SHARED_LOCK);
-		//if(newdir != ZERO) IDOS->SetCurrentDir(newdir);
-//IDOS->Printf("Launching %ld:'%s'...\n",gloom_game,zgloom_game_drw[gloom_game]);
 		if(zgloom_game_drw[gloom_game] == NULL)
 		{
+			IDOS->SetCurrentDir(olddir);
+			IDOS->UnLock(newdir);
 			CloseLibs();
-			return 1;
+			return RETURN_ERROR;
 		}
 	}
 	else // from CLI/Shell
 	{
-//IDOS->Printf("'%s'\n",argv[1]);
+//IExec->DebugPrintF("'%s'\n",argv[1]);
 		newdir = IDOS->Lock(argv[1], SHARED_LOCK);
-		//if(newdir != ZERO) IDOS->SetCurrentDir(newdir);
+		if(argc!=2  ||  newdir==ZERO) {
+			std::cout << "USAGE: " << argv[0] << " <gloom_drawer_game>\n";
+			IDOS->SetCurrentDir(olddir);
+			IDOS->UnLock(newdir);
+			CloseLibs();
+			return RETURN_ERROR;
+		}
 	}
 
 	//newdir = IDOS->Lock(zgloom_game_drw[gloom_game], SHARED_LOCK);
@@ -195,7 +202,8 @@ int main(int argc, char* argv[])
 		IDOS->UnLock(newdir);
 #endif
 		std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
-		return 1;
+		CloseLibs();
+		return RETURN_ERROR;
 	}
 
 #ifdef __amigaos4__
@@ -212,22 +220,19 @@ int main(int argc, char* argv[])
 	GameState state = STATE_TITLE;
 
 #ifdef __amigaos4__
-//IDOS->Printf("'%s' (%ld)\n",argv[1],argc);
+//IExec->DebugPrintF("'%s' (%ld)\n",argv[1],argc);
 	if(script.numlines == 0)
 	{
 		SDL_Quit();
 		IDOS->SetCurrentDir(olddir);
 		IDOS->UnLock(newdir);
-		if(argc == 0)
-		{
-			CloseLibs();
-		}
-		else
+		if(argc != 0)
 		{
 			std::cout << "ERROR: Invalid Gloom (drawer) game/release!!!\n";
-			std::cout << "Usage from CLI/Shell: " << argv[0] << " <GLOOM_DRAWER_GAME>\n";
+			std::cout << "USAGE: " << argv[0] << " <gloom_drawer_game>\n";
 		}
-		return 1;
+		CloseLibs();
+		return RETURN_ERROR;
 	}
 #endif
 
@@ -265,8 +270,8 @@ int main(int argc, char* argv[])
 		IDOS->UnLock(newdir);
 #endif
 		std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
-		if(argc == 0) CloseLibs();
-		return 1;
+		CloseLibs();
+		return RETURN_ERROR;
 	}
 
 	Config::RegisterWin(win);
@@ -281,8 +286,8 @@ int main(int argc, char* argv[])
 		IDOS->UnLock(newdir);
 #endif
 		std::cout << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
-		if(argc == 0) CloseLibs();
-		return 1;
+		CloseLibs();
+		return RETURN_ERROR;
 	}
 
 //SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");//"nearest", "linear", "best") // 0,1,2
@@ -298,8 +303,8 @@ int main(int argc, char* argv[])
 		IDOS->UnLock(newdir);
 #endif
 		std::cout << "SDL_CreateTexture Error: " << SDL_GetError() << std::endl;
-		if(argc == 0) CloseLibs();
-		return 1;
+		CloseLibs();
+		return RETURN_ERROR;
 	}
 
 	SDL_ShowCursor(SDL_DISABLE);
@@ -391,6 +396,9 @@ int main(int argc, char* argv[])
 	blitrect.y = (renderheight - 256 * screenscale) / 2;
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
+#ifdef __amigaos4__
+	SDL_SetWindowGrab(win, SDL_TRUE);
+#endif
 
 	//set up the level select
 
@@ -581,7 +589,7 @@ int main(int argc, char* argv[])
 #ifdef __amigaos4__
 				if (sEvent.window.event == SDL_WINDOWEVENT_MINIMIZED)
 				{
-//printf("Iconified\n");
+//IExec->DebugPrintF("Iconified\n");
 					if(state == STATE_PLAYING) {
 						sEvent.type = SDL_KEYDOWN;
 						state = STATE_MENU;
@@ -590,13 +598,13 @@ int main(int argc, char* argv[])
 				}
 				/*if (sEvent.window.event == SDL_WINDOWEVENT_RESTORED)
 				{
-printf("Uniconified\n");
+IExec->DebugPrintF("Uniconified\n");
 				}*/
 #endif
 			}
 			if (Config::HaveController() && (sEvent.type == SDL_CONTROLLERBUTTONDOWN))
 			{
-//printf("sEvent.type=0x%08x\n",sEvent.type);
+IExec->DebugPrintF("sEvent.type=0x%08x\n",sEvent.type);
 				//fake up a key event
 				if ((state == STATE_TITLE) || (state == STATE_MENU) || (state == STATE_WAITING))
 				{
@@ -818,22 +826,14 @@ printf("Uniconified\n");
 			std::string filename("img");
 
 			filename += std::to_string(screennum);
-//#ifdef __amigaos4__
-//			filename += ".png";
-//#else
 			filename += ".bmp";
-//#endif
 			screennum++;
 
 #ifdef __amigaos4__
 			SDL_SetHint(SDL_HINT_BMP_SAVE_LEGACY_FORMAT, "1"); // to save in an "amiga"ish format
 #endif
 
-//#ifdef __amigaos4__
-//			IMG_SavePNG(render32, filename.c_str());
-//#else
 			SDL_SaveBMP(render32, filename.c_str());
-//#endif
 			printscreen = false;
 		}
 
@@ -867,7 +867,7 @@ printf("Uniconified\n");
 	IDOS->SetCurrentDir(olddir);
 	IDOS->UnLock(newdir);
 
-	if(argc == 0) CloseLibs();
+	CloseLibs();
 #endif
 
 	return 0;

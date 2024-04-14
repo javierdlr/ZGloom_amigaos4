@@ -14,14 +14,14 @@ PrintScreen/SysReq dumps a bitmap. Escape pauses the action and shows the menu.
 
 
 
-2020.09.08
+2024.04.13
 -First port to AmigaOS4.
 -Created Makefile.amigaos4.
 -config.cpp: std::stoi replacement thx to salass00.
 -Disabled music audio (XMP) support [WIP]
 -zgloom.cpp: added amiga version string and stack cookie.
 -Window opens centered on screen.
--titlescreen.cpp: added zgloom version string to about screen.
+-titlescreen.cpp: added zgloom version string in about screen.
 -Added zgloomGUI.script to launch different gloom releases.
 -Created amigaos4.h for dependecies/functions/methods using only on AmigaOS4.
 -Updated to use lastest SDL2 build.
@@ -30,13 +30,13 @@ PrintScreen/SysReq dumps a bitmap. Escape pauses the action and shows the menu.
 -zgloomGUI.script: updated to suit above change.
 -zgloom.cpp: iconify while playing, pauses game (like pressing ESC).
 -Added icons made by davebraco <davebraco@gmail.com>.
--Updated to ZGloom 0.3.0 (was 0.2.0).
+-Updated to ZGloom 0.3.0.
 -zgloom.cpp: window has resizable gadget (SDL_CreateWindow(..SDL_WINDOW_RESIZABLE..) tag).
 -zgloom.cpp: wasn't freeing all resources when "forced" to exit/quit.
 -zgloom.cpp: added gamecontrollerdb.txt file mappings (gamepad support database).
--zgloom.cpp & zgui.c/.h: created a simple GUI for selecting gloom game (removing CLI,
- zgloomGUI.script usage).
+-zgloom.cpp & zgui.c/.h: created a simple GUI for selecting gloom game.
 -zgui.c: rewrote gloom release/edition image button and (re)added CLI/Shell usage.
+-font.cpp: Font::Load() "surfaces32[i]" wasn't initialized, thus crashing on quit.
 
 
 Thanks to (in no special order):
