@@ -25,9 +25,8 @@ struct Library *ChooserBase = NULL;
 // the class library base
 struct ClassLibrary *ButtonBase = NULL, *BitMapBase = NULL, *LayoutBase = NULL, *WindowBase = NULL;
 // the class pointer
-Class *ButtonClass, *BitMapClass, *ChooserClass, *LayoutClass, *WindowClass;
+Class *ChooserClass, *ButtonClass, *BitMapClass, *LayoutClass, *WindowClass;
 // some interfaces needed
-//struct LayoutIFace *ILayout;
 //struct ChooserIFace *IChooser;
 
 
@@ -58,7 +57,6 @@ BOOL OpenLibs(void)
 		ButtonBase = IIntuition->OpenClass("gadgets/button.gadget", 52, &ButtonClass);
 		WindowBase = IIntuition->OpenClass("window.class", 52, &WindowClass);
 
-		//ILayout = (struct LayoutIFace *)IExec->GetInterface( (struct Library *)LayoutBase, "main", 1, NULL );
 		ChooserBase = (struct Library *)IIntuition->OpenClass("gadgets/chooser.gadget", 52, &ChooserClass);
 		//IChooser = (struct ChooserIFace *)IExec->GetInterface( (struct Library *)ChooserBase, "main", 1, NULL );
 	}
@@ -87,7 +85,6 @@ void CloseLibs(void)
 		ChooserBase = NULL;
 	}
 
-	//IExec->DropInterface( (struct Interface *)ILayout );
 	IExec->DropInterface( (struct Interface *)IIcon );
 	IIcon = NULL;
 	IExec->CloseLibrary(IconBase);
@@ -241,7 +238,7 @@ BOOL ProcessGUI(struct ZGloomGUI *zgg)
 				break;
 				case OID_ZGLOOM_BTN:
 					//IIntuition->GetAttr(CHOOSER_Selected, OBJ(OID_ZGLOOM_CHOOSER), &res_value);
-					//gloom_game = res_value;
+					//zgg->game = res_value;
 //IExec->DebugPrintF("\tOID_ZGLOOM_BTN (0x%08lx '%s')\n",zgg->game,zgloom_game_drw[zgg->game]);
 					done = FALSE;
 				break;
@@ -256,8 +253,8 @@ BOOL ProcessGUI(struct ZGloomGUI *zgg)
 int32 launch_gui(void)
 {
 	struct MsgPort *gAppPort = NULL;
-	//struct List zgloom_chooser;
 	struct DiskObject *iconify = NULL;
+	//struct List zgloom_chooser;
 	CONST_STRPTR zgloom_chooser[] = { "Gloom", "Gloom Deluxe", "Gloom Zombie Edition", "Gloom Zombie Massacre", NULL };
 	uint32 res = sizeof(zgloom_game_drw)/sizeof(STRPTR) - 1; // last array value -> NULL
 	struct ZGloomGUI *ZGG = IExec->AllocVecTags(sizeof(struct ZGloomGUI), AVT_ClearWithValue,NULL, TAG_END);
@@ -272,11 +269,11 @@ int32 launch_gui(void)
 		iconify->do_CurrentY = NO_ICON_POSITION;
 	}
 
-	//make_chooser_list(&zgloom_chooser, CHS_ACTION_7, 5);
+	//make_chooser_list(&zgloom_chooser, CHOOSER_OPTION1, 4);
 
 	OBJ(OID_MAIN) = IIntuition->NewObject(WindowClass, NULL, //"window.class",
 		WA_ScreenTitle, VERS " " DATE,
-		WA_Title,       "ZGloomStart GUI",
+		WA_Title,       "ZGloom GUI",
 		WA_DragBar,     TRUE,
 		WA_CloseGadget, TRUE,
 		WA_SizeGadget,  TRUE,
@@ -289,7 +286,7 @@ int32 launch_gui(void)
 		WINDOW_PopupGadget,   TRUE,
 		//WINDOW_JumpScreensMenu, TRUE,
 		//WINDOW_LockHeight,    TRUE,
-		WINDOW_GadgetHelp,    TRUE,
+		//WINDOW_GadgetHelp,    TRUE,
 		WINDOW_Layout, IIntuition->NewObject(LayoutClass, NULL, //"layout.gadget",
          LAYOUT_Orientation, LAYOUT_ORIENT_VERT,
          LAYOUT_SpaceOuter,  TRUE,
@@ -305,8 +302,8 @@ int32 launch_gui(void)
              GA_RelVerify,  TRUE,
              GA_Underscore, 0,
              //GA_HintInfo,   "Select Gloom game",
-             CHOOSER_LabelArray,  zgloom_chooser,
-             CHOOSER_Selected, 0,
+             CHOOSER_LabelArray, zgloom_chooser,
+             CHOOSER_Selected,   0,
            TAG_DONE),
 // BUTTON/IMAGE GROUP
            LAYOUT_AddChild, OBJ(OID_ZGLOOM) = IIntuition->NewObject(LayoutClass, NULL, //"layout.gadget",
@@ -327,15 +324,16 @@ int32 launch_gui(void)
 	//IDOS->Printf("Launching %ld: '%s'...\n",ZGG->game,zgloom_game_drw[res]);
 
 	IIntuition->DisposeObject( OBJ(OID_ZGLOOM_IMG) );
-	//OBJ(OID_ZGLOOM_IMG) = NULL;
+	OBJ(OID_ZGLOOM_IMG) = NULL;
 	IIntuition->DisposeObject( OBJ(OID_MAIN) );
-	//OBJ(OID_MAIN) = NULL;
+	OBJ(OID_MAIN) = NULL;
 
 	//free_chooser_list(&zgloom_chooser);
 
-	IExec->FreeSysObject(ASOT_PORT, gAppPort);
+//	IExec->FreeSysObject(ASOT_PORT, gAppPort);
 
 	IExec->FreeVec(ZGG);
+
 	return res;
 }
 

@@ -146,45 +146,51 @@ int main(int argc, char* argv[])
 {
 #ifdef __amigaos4__
 	BPTR newdir = ZERO, olddir = ZERO;
+	int32 game_idx; // 0:Gloom, 1:G_Deluxe; 2:Zombie_Ed; 3:Z_Massacre; 4:none/quit
+	STRPTR game_drw = NULL;
 
 	if(OpenLibs() == FALSE)
 	{
-		IDOS->PutErrStr("Missing classes/libs to show ZGloomStart GUI!");
+		IDOS->PutErrStr("Missing classes/libs to show ZGloom GUI!");
 		CloseLibs();
 		return RETURN_FAIL;
 	}
 
-	olddir = IDOS->GetCurrentDir();
-
 	if(argc == 0) // from WB
 	{
-		int32 gloom_game; // 0:Gloom, 1:G_Deluxe; 2:Zombie_Ed; 3:Z_Massacre; 4:none/quit
+		struct WBStartup *wbs = (struct WBStartup *)argv;
+		//int32 game_idx; // 0:Gloom, 1:G_Deluxe; 2:Zombie_Ed; 3:Z_Massacre; 4:none/quit
 
-		gloom_game = launch_gui();
-		newdir = IDOS->Lock(zgloom_game_drw[gloom_game], SHARED_LOCK);
-		if(zgloom_game_drw[gloom_game] == NULL)
+		olddir = IDOS->DupLock(wbs->sm_ArgList->wa_Lock);
+
+		game_idx = launch_gui();
+
+		if(zgloom_game_drw[game_idx] == NULL)
 		{
 			IDOS->SetCurrentDir(olddir);
-			IDOS->UnLock(newdir);
 			CloseLibs();
 			return RETURN_ERROR;
 		}
+
+		game_drw = (STRPTR)zgloom_game_drw[game_idx];
 	}
 	else // from CLI/Shell
 	{
-//IExec->DebugPrintF("'%s'\n",argv[1]);
-		newdir = IDOS->Lock(argv[1], SHARED_LOCK);
-		if(argc!=2  ||  newdir==ZERO) {
+		olddir = IDOS->GetCurrentDir();
+
+		if(argc != 2) {
 			std::cout << "USAGE: " << argv[0] << " <gloom_drawer_game>\n";
 			IDOS->SetCurrentDir(olddir);
-			IDOS->UnLock(newdir);
 			CloseLibs();
 			return RETURN_ERROR;
 		}
+
+		game_drw = (STRPTR)argv[1];
 	}
 
-	//newdir = IDOS->Lock(zgloom_game_drw[gloom_game], SHARED_LOCK);
-	//if(newdir != ZERO) IDOS->SetCurrentDir(newdir);
+do{ // when you quit game GUI will show up again
+//IExec->DebugPrintF("game_drw = %s\n",game_drw);
+	newdir = IDOS->Lock(game_drw, SHARED_LOCK);
 	IDOS->SetCurrentDir(newdir);
 #endif
 
@@ -197,12 +203,12 @@ int main(int argc, char* argv[])
 
 	if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0)
 	{
+		std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
 #ifdef __amigaos4__
 		IDOS->SetCurrentDir(olddir);
 		IDOS->UnLock(newdir);
-#endif
-		std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
 		CloseLibs();
+#endif
 		return RETURN_ERROR;
 	}
 
@@ -362,12 +368,12 @@ int main(int argc, char* argv[])
 	{
 		if (xmp_load_module_from_memory(ctx, titlemusic.data, titlemusic.size))
 		{
-			std::cout << "music error";
+			std::cout << "music error\n";
 		}
 
 		if (xmp_start_player(ctx, 22050, 0))
 		{
-			std::cout << "music error";
+			std::cout << "music error\n";
 		}
 		Mix_HookMusic(fill_audio, ctx);
 		Config::SetMusicVol(Config::GetMusicVol());
@@ -396,9 +402,9 @@ int main(int argc, char* argv[])
 	blitrect.y = (renderheight - 256 * screenscale) / 2;
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
-#ifdef __amigaos4__
-	SDL_SetWindowGrab(win, SDL_TRUE);
-#endif
+//#ifdef __amigaos4__
+//	SDL_SetWindowGrab(win, SDL_TRUE);
+//#endif
 
 	//set up the level select
 
@@ -452,12 +458,12 @@ int main(int argc, char* argv[])
 							 {
 								 if (xmp_load_module_from_memory(ctx, intermissionmusic.data, intermissionmusic.size))
 								 {
-									 std::cout << "music error";
+									 std::cout << "music error\n";
 								 }
 
 								 if (xmp_start_player(ctx, 22050, 0))
 								 {
-									 std::cout << "music error";
+									 std::cout << "music error\n";
 								 }
 								 Mix_HookMusic(fill_audio, ctx);
 								 Config::SetMusicVol(Config::GetMusicVol());
@@ -479,12 +485,12 @@ int main(int argc, char* argv[])
 						{
 							if (xmp_load_module_from_memory(ctx, intermissionmusic.data, intermissionmusic.size))
 							{
-								std::cout << "music error";
+								std::cout << "music error\n";
 							}
 
 							if (xmp_start_player(ctx, 22050, 0))
 							{
-								std::cout << "music error";
+								std::cout << "music error\n";
 							}
 							Mix_HookMusic(fill_audio, ctx);
 							Config::SetMusicVol(Config::GetMusicVol());
@@ -510,7 +516,6 @@ int main(int argc, char* argv[])
 				{
 					if (state == STATE_PARSING)
 					{
-
 						cam.x.SetInt(0);
 						cam.y = 120;
 						cam.z.SetInt(0);
@@ -521,18 +526,23 @@ int main(int argc, char* argv[])
 						renderer.Init(render32, &gmap, &objgraphics);
 						logic.InitLevel(&gmap, &cam, &objgraphics);
 						state = STATE_PLAYING;
+/*#ifdef __amigaos4__
+//std::cout << SDL_GetWindowGrab(win) << "\n";
+						SDL_SetWindowGrab(win, SDL_TRUE);
+//std::cout << SDL_GetWindowGrab(win) << "\n";
+#endif*/
 
 #ifndef _NOMUSIC_
 						if (haveingamemusic)
 						{
 							if (xmp_load_module_from_memory(ctx, ingamemusic.data, ingamemusic.size))
 							{
-								std::cout << "music error";
+								std::cout << "music error\n";
 							}
 
 							if (xmp_start_player(ctx, 22050, 0))
 							{
-								std::cout << "music error";
+								std::cout << "music error\n";
 							}
 							Mix_HookMusic(fill_audio, ctx);
 							Config::SetMusicVol(Config::GetMusicVol());
@@ -556,12 +566,12 @@ int main(int argc, char* argv[])
 					{
 						if (xmp_load_module_from_memory(ctx, titlemusic.data, titlemusic.size))
 						{
-							std::cout << "music error";
+							std::cout << "music error\n";
 						}
 
 						if (xmp_start_player(ctx, 22050, 0))
 						{
-							std::cout << "music error";
+							std::cout << "music error\n";
 						}
 						Mix_HookMusic(fill_audio, ctx);
 						Config::SetMusicVol(Config::GetMusicVol());
@@ -578,7 +588,7 @@ int main(int argc, char* argv[])
 			titlescreen.Render(titlebitmap, render8, smallfont);
 		}
 
-		while ((state!= STATE_SPOOLING) && SDL_PollEvent(&sEvent))
+		while ((state != STATE_SPOOLING) && SDL_PollEvent(&sEvent))
 		{
 			if (sEvent.type == SDL_WINDOWEVENT)
 			{
@@ -704,6 +714,11 @@ IExec->DebugPrintF("sEvent.type=0x%08x\n",sEvent.type);
 					{
 						case MenuScreen::MENURET_PLAY:
 							state = STATE_PLAYING;
+#ifdef __amigaos4__
+//std::cout << SDL_GetWindowGrab(win) << "\n";
+							SDL_SetWindowGrab(win, SDL_TRUE);
+//std::cout << SDL_GetWindowGrab(win) << "\n";
+#endif
 							break;
 						case MenuScreen::MENURET_QUIT:
 							script.Reset();
@@ -713,12 +728,12 @@ IExec->DebugPrintF("sEvent.type=0x%08x\n",sEvent.type);
 							{
 								if (xmp_load_module_from_memory(ctx, titlemusic.data, titlemusic.size))
 								{
-									std::cout << "music error";
+									std::cout << "music error\n";
 								}
 
 								if (xmp_start_player(ctx, 22050, 0))
 								{
-									std::cout << "music error";
+									std::cout << "music error\n";
 								}
 								Mix_HookMusic(fill_audio, ctx);
 								Config::SetMusicVol(Config::GetMusicVol());
@@ -732,6 +747,11 @@ IExec->DebugPrintF("sEvent.type=0x%08x\n",sEvent.type);
 				if ((state == STATE_PLAYING) && (sEvent.key.keysym.sym == SDLK_ESCAPE))
 				{
 					state = STATE_MENU;
+#ifdef __amigaos4__
+//std::cout << SDL_GetWindowGrab(win) << "\n";
+					SDL_SetWindowGrab(win, SDL_FALSE);
+//std::cout << SDL_GetWindowGrab(win) << "\n";
+#endif
 				}
 			}
 
@@ -848,24 +868,39 @@ IExec->DebugPrintF("sEvent.type=0x%08x\n",sEvent.type);
 
 #ifndef _NOMUSIC_
 	xmp_free_context(ctx);
+	ctx = nullptr;
 #endif
 
 	Config::Save();
 
 	SoundHandler::Quit();
 
-	SDL_FreeSurface(render8);
-	SDL_FreeSurface(render32);
-	SDL_FreeSurface(screen32);
-	SDL_FreeSurface(intermissionscreen);
-	SDL_FreeSurface(titlebitmap);
-	SDL_DestroyRenderer(ren);
-	SDL_DestroyWindow(win);
-	SDL_Quit();
+	SDL_FreeSurface(render8); render8 = nullptr;
+	SDL_FreeSurface(render32); render32 = nullptr;
+	SDL_FreeSurface(screen32); screen32 = nullptr;
+	SDL_FreeSurface(intermissionscreen); intermissionscreen = nullptr;
+	SDL_FreeSurface(titlebitmap); titlebitmap = nullptr;
+	SDL_DestroyTexture(rendertex); rendertex = nullptr;
+	SDL_DestroyRenderer(ren); ren = nullptr;
+	SDL_DestroyWindow(win); win = nullptr;
 
+// NOTE: if I put this "part" of code just below SDL_Quit() it crashes.
 #ifdef __amigaos4__
 	IDOS->SetCurrentDir(olddir);
 	IDOS->UnLock(newdir);
+
+	if(argc == 0) { // when you quit game GUI will show up again
+		game_idx = launch_gui();
+		game_drw = (STRPTR)zgloom_game_drw[game_idx];
+//IExec->DebugPrintF("game_drw = '%s' (0x%08lx)\n",game_drw,game_drw);
+//game_drw = NULL;
+	}
+#endif
+
+	SDL_Quit();
+
+#ifdef __amigaos4__
+}while(game_drw != NULL);
 
 	CloseLibs();
 #endif

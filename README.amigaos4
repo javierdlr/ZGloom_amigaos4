@@ -3,8 +3,9 @@
 Gloom was made freely available by its developers here: https://github.com/earok/GloomAmiga/archive/master.zip
 or if you have the original ones, just copy the data drawers/files (maps, misc, objs,
 pics, sfxs and txts) inside the corresponding drawer.
-NOTE: I already added the Gloom data files, so you don't need to download from github.
+NOTE1: I already added the Gloom data files, so you don't need to download from github.
 Other data files here: https://www.morphos-storage.net/dl.php?id=1538895 [BeWorld]
+NOTE2: in window mode and playing with mouse sometimes the focus is lost. [WIP]
 
 
 # Default Controls
@@ -37,12 +38,13 @@ PrintScreen/SysReq dumps a bitmap. Escape pauses the action and shows the menu.
 -zgloom.cpp & zgui.c/.h: created a simple GUI for selecting gloom game.
 -zgui.c: rewrote gloom release/edition image button and (re)added CLI/Shell usage.
 -font.cpp: Font::Load() "surfaces32[i]" wasn't initialized, thus crashing on quit.
+-zgloom.cpp & zgui.c: now GUI "respawns" after quitting current game.
 
 
 Thanks to (in no special order):
 Swizpig for ZGloom port (https://github.com/Swizpig/ZGloom).
 BeWorld for its morphos port (https://www.morphos-storage.net/dl.php?id=1538895).
-salass00, kas1e, samo79 (code and tips).
+salass00, kas1e, samo79, smarkusg (code and tips).
 os4coding.net
 
 
@@ -52,3 +54,6 @@ http://nitta.sakura.ne.jp/gloom-mod/ZGloom/ZGloom-testing.html
 
 ToDo:
 A lot ;-)
+
+https://github.com/Swizpig/ZGloom/issues/31
+config.txt: setting "rendersize 640 360" and "focallength 180" (makes pixel perfect upscaling to 1920x1080 in fullscreen).
